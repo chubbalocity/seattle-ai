@@ -11,6 +11,176 @@
             box-sizing: border-box;
         }
 
+        // Initialize event listeners after page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const analyzer = new SystemAnalyzer();
+
+            // Tab switching
+            document.getElementById('autoTab').addEventListener('click', () => {
+                document.getElementById('autoTab').classList.add('active');
+                document.getElementById('manualTab').classList.remove('active');
+                document.getElementById('autoDetect').classList.remove('hidden');
+                document.getElementById('manualInput').classList.add('hidden');
+            });
+
+            document.getElementById('manualTab').addEventListener('click', () => {
+                document.getElementById('manualTab').classList.add('active');
+                document.getElementById('autoTab').classList.remove('active');
+                document.getElementById('manualInput').classList.remove('hidden');
+                document.getElementById('autoDetect').classList.add('hidden');
+            });
+
+            // Manufacturer selection
+            document.getElementById('manufacturer').addEventListener('change', (e) => {
+                const manufacturer = e.target.value;
+                const modelSelect = document.getElementById('model');
+                const yearSelect = document.getElementById('year');
+                const lookupBtn = document.getElementById('lookupBtn');
+
+                if (manufacturer) {
+                    const models = analyzer.getManufacturerModels(manufacturer);
+                    modelSelect.innerHTML = '<option value="">Select Model</option>' + 
+                        models.map(model => `<option value="${model}">${model}</option>`).join('');
+                    modelSelect.disabled = false;
+                } else {
+                    modelSelect.innerHTML = '<option value="">Select Model</option>';
+                    modelSelect.disabled = true;
+                    yearSelect.innerHTML = '<option value="">Select Year</option>';
+                    yearSelect.disabled = true;
+                    lookupBtn.disabled = true;
+                }
+            });
+
+            // Model selection
+            document.getElementById('model').addEventListener('change', (e) => {
+                const manufacturer = document.getElementById('manufacturer').value;
+                const model = e.target.value;
+                const yearSelect = document.getElementById('year');
+                const lookupBtn = document.getElementById('lookupBtn');
+
+                if (model && manufacturer) {
+                    const years = analyzer.getModelYears(manufacturer, model);
+                    yearSelect.innerHTML = '<option value="">Select Year</option>' + 
+                        years.map(year => `<option value="${year}">${year}</option>`).join('');
+                    yearSelect.disabled = false;
+                } else {
+                    yearSelect.innerHTML = '<option value="">Select Year</option>';
+                    yearSelect.disabled = true;
+                    lookupBtn.disabled = true;
+                }
+            });
+
+            // Year selection
+            document.getElementById('year').addEventListener('change', (e) => {
+                const lookupBtn = document.getElementById('lookupBtn');
+                lookupBtn.disabled = !e.target.value;
+            });
+
+            // Auto-detect analysis
+            document.getElementById('analyzeBtn').addEventListener('click', async () => {
+                await runAnalysis('auto');
+            });
+
+            // Lookup analysis
+            document.getElementById('lookupBtn').addEventListener('click', async () => {
+                await runAnalysis('lookup');
+            });
+
+            async function runAnalysis(type) {
+                const autoBtn = document.getElementById('analyzeBtn');
+                const lookupBtn = document.getElementById('lookupBtn');
+                const loading = document.getElementById('loading');
+                const systemInfo = document.getElementById('systemInfo');
+                const recommendations = document.getElementById('recommendations');
+
+                // Show loading state
+                if (type === 'auto') {
+                    autoBtn.disabled = true;
+                } else {
+                    lookupBtn.disabled = true;
+                }
+                loading.classList.remove('hidden');
+                systemInfo.classList.add('hidden');
+                recommendations.classList.add('hidden');
+
+                try {
+                    // Simulate analysis delay for better UX
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    if (type === 'auto') {
+                        // Auto-detect analysis
+                        await analyzer.analyzeSystem();
+                    } else {
+                        // Lookup analysis
+                        const manufacturer = document.getElementById('manufacturer').value;
+                        const model = document.getElementById('model').value;
+                        const year = document.getElementById('year').value;
+                        
+                        const configurations = analyzer.getModelConfigurations(manufacturer, model, year);
+                        
+                        if (configurations.length === 1) {
+                            // Only one configuration, use it directly
+                            analyzer.analyzeFromSpecs(configurations[0]);
+                        } else if (configurations.length > 1) {
+                            // Multiple configurations, let user choose the best one (highest RAM)
+                            const bestConfig = configurations.reduce((best, current) => 
+                                current.ram > best.ram ? current : best
+                            );
+                            analyzer.analyzeFromSpecs(bestConfig);
+                        }
+                    }
+                    
+                    // Display results
+                    analyzer.displaySystemInfo();
+                    systemInfo.classList.remove('hidden');
+
+                    const recommendedModels = analyzer.getRecommendedModels();
+                    analyzer.displayRecommendations(recommendedModels);
+                    recommendations.classList.remove('hidden');
+
+                    // Show multiple configuration note if applicable
+                    if (type === 'lookup') {
+                        const manufacturer = document.getElementById('manufacturer').value;
+                        const model = document.getElementById('model').value;
+                        const year = document.getElementById('year').value;
+                        const configurations = analyzer.getModelConfigurations(manufacturer, model, year);
+                        
+                        if (configurations.length > 1) {
+                            const bestConfig = configurations.reduce((best, current) => 
+                                current.ram > best.ram ? current : best
+                            );
+                            const modelList = document.getElementById('modelList');
+                            modelList.innerHTML = `
+                                <div class="warning">
+                                    <h4>ℹ️ Multiple Configurations Available</h4>
+                                    <p>This ${manufacturer} ${model} (${year}) comes in multiple configurations. Showing recommendations for the highest-spec version (${bestConfig.config}). Your actual model may vary.</p>
+                                </div>
+                            ` + modelList.innerHTML;
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Analysis failed:', error);
+                    document.getElementById('modelList').innerHTML = `
+                        <div class="warning">
+                            <h4>❌ Analysis Error</h4>
+                            <p>Unable to complete system analysis. Please try refreshing the page.</p>
+                        </div>
+                    `;
+                    recommendations.classList.remove('hidden');
+                } finally {
+                    loading.classList.add('hidden');
+                    if (type === 'auto') {
+                        autoBtn.disabled = false;
+                        autoBtn.textContent = '🔄 Re-analyze System';
+                    } else {
+                        lookupBtn.disabled = false;
+                        lookupBtn.textContent = '🔄 Re-lookup Specifications';
+                    }
+                }
+            }
+        });
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
