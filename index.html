@@ -198,7 +198,92 @@
             100% { transform: rotate(360deg); }
         }
 
-        .hidden { display: none; }
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .method-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #333;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .analysis-method {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .analysis-method p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .input-group select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group select:focus {
+            border-color: #4facfe;
+            outline: none;
+        }
+
+        .input-group select:disabled {
+            background: #f5f5f5;
+            color: #999;
+            cursor: not-allowed;
+        }
 
         @media (max-width: 768px) {
             .header h1 { font-size: 2rem; }
@@ -215,7 +300,53 @@
         </div>
         
         <div class="content">
-            <button id="analyzeBtn" class="analyze-btn">🔍 Analyze My System</button>
+            <div class="input-section">
+                <h2>Choose Analysis Method</h2>
+                <div class="method-tabs">
+                    <button id="autoTab" class="tab-btn active">Auto-Detect</button>
+                    <button id="manualTab" class="tab-btn">Computer Lookup</button>
+                </div>
+
+                <div id="autoDetect" class="analysis-method">
+                    <p>Automatically detect system capabilities using browser APIs (limited accuracy)</p>
+                    <button id="analyzeBtn" class="analyze-btn">🔍 Auto-Analyze System</button>
+                </div>
+
+                <div id="manualInput" class="analysis-method hidden">
+                    <p>Enter your computer details for accurate hardware specifications</p>
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label for="manufacturer">Manufacturer:</label>
+                            <select id="manufacturer">
+                                <option value="">Select Manufacturer</option>
+                                <option value="apple">Apple</option>
+                                <option value="dell">Dell</option>
+                                <option value="hp">HP</option>
+                                <option value="lenovo">Lenovo</option>
+                                <option value="asus">ASUS</option>
+                                <option value="acer">Acer</option>
+                                <option value="microsoft">Microsoft</option>
+                                <option value="msi">MSI</option>
+                                <option value="alienware">Alienware</option>
+                                <option value="custom">Custom Build</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="model">Model:</label>
+                            <select id="model" disabled>
+                                <option value="">Select Model</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="year">Year:</label>
+                            <select id="year" disabled>
+                                <option value="">Select Year</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button id="lookupBtn" class="analyze-btn" disabled>🔍 Lookup Specifications</button>
+                </div>
+            </div>
             
             <div id="loading" class="loading hidden">
                 <div class="spinner"></div>
@@ -235,6 +366,7 @@
         class SystemAnalyzer {
             constructor() {
                 this.systemInfo = {};
+                this.computerDatabase = this.initComputerDatabase();
                 this.models = [
                     {
                         name: "Llama 3.2 1B",
@@ -244,7 +376,205 @@
                         description: "Lightweight model perfect for basic tasks. Fast inference with minimal resource usage.",
                         platforms: ["Ollama", "LM Studio"],
                         performance: "good"
+                    }
+
+            initComputerDatabase() {
+                return {
+                    apple: {
+                        "MacBook Air": {
+                            2024: [
+                                { config: "M3 (8GB)", ram: 8, gpu: "M3", vram: 8, cpu: "M3", cores: 8 },
+                                { config: "M3 (16GB)", ram: 16, gpu: "M3", vram: 16, cpu: "M3", cores: 8 },
+                                { config: "M3 (24GB)", ram: 24, gpu: "M3", vram: 24, cpu: "M3", cores: 8 }
+                            ],
+                            2023: [
+                                { config: "M2 (8GB)", ram: 8, gpu: "M2", vram: 8, cpu: "M2", cores: 8 },
+                                { config: "M2 (16GB)", ram: 16, gpu: "M2", vram: 16, cpu: "M2", cores: 8 },
+                                { config: "M2 (24GB)", ram: 24, gpu: "M2", vram: 24, cpu: "M2", cores: 8 }
+                            ],
+                            2022: [
+                                { config: "M2 (8GB)", ram: 8, gpu: "M2", vram: 8, cpu: "M2", cores: 8 },
+                                { config: "M2 (16GB)", ram: 16, gpu: "M2", vram: 16, cpu: "M2", cores: 8 }
+                            ]
+                        },
+                        "MacBook Pro": {
+                            2024: [
+                                { config: "M3 Pro (18GB)", ram: 18, gpu: "M3 Pro", vram: 18, cpu: "M3 Pro", cores: 12 },
+                                { config: "M3 Max (36GB)", ram: 36, gpu: "M3 Max", vram: 36, cpu: "M3 Max", cores: 16 },
+                                { config: "M3 Max (128GB)", ram: 128, gpu: "M3 Max", vram: 128, cpu: "M3 Max", cores: 16 }
+                            ],
+                            2023: [
+                                { config: "M2 Pro (16GB)", ram: 16, gpu: "M2 Pro", vram: 16, cpu: "M2 Pro", cores: 10 },
+                                { config: "M2 Max (32GB)", ram: 32, gpu: "M2 Max", vram: 32, cpu: "M2 Max", cores: 12 },
+                                { config: "M2 Max (96GB)", ram: 96, gpu: "M2 Max", vram: 96, cpu: "M2 Max", cores: 12 }
+                            ]
+                        },
+                        "iMac": {
+                            2024: [
+                                { config: "M3 (8GB)", ram: 8, gpu: "M3", vram: 8, cpu: "M3", cores: 8 },
+                                { config: "M3 (16GB)", ram: 16, gpu: "M3", vram: 16, cpu: "M3", cores: 8 },
+                                { config: "M3 (24GB)", ram: 24, gpu: "M3", vram: 24, cpu: "M3", cores: 8 }
+                            ]
+                        },
+                        "Mac Studio": {
+                            2024: [
+                                { config: "M2 Max (32GB)", ram: 32, gpu: "M2 Max", vram: 32, cpu: "M2 Max", cores: 12 },
+                                { config: "M2 Ultra (64GB)", ram: 64, gpu: "M2 Ultra", vram: 64, cpu: "M2 Ultra", cores: 24 },
+                                { config: "M2 Ultra (192GB)", ram: 192, gpu: "M2 Ultra", vram: 192, cpu: "M2 Ultra", cores: 24 }
+                            ]
+                        }
                     },
+                    dell: {
+                        "XPS 13": {
+                            2024: [
+                                { config: "i7-1360P (16GB)", ram: 16, gpu: "Intel Iris Xe", vram: 2, cpu: "Intel i7", cores: 12 },
+                                { config: "i7-1360P (32GB)", ram: 32, gpu: "Intel Iris Xe", vram: 4, cpu: "Intel i7", cores: 12 }
+                            ],
+                            2023: [
+                                { config: "i7-1355U (16GB)", ram: 16, gpu: "Intel Iris Xe", vram: 2, cpu: "Intel i7", cores: 10 },
+                                { config: "i7-1355U (32GB)", ram: 32, gpu: "Intel Iris Xe", vram: 4, cpu: "Intel i7", cores: 10 }
+                            ]
+                        },
+                        "XPS 15": {
+                            2024: [
+                                { config: "i7-13700H + RTX 4060 (16GB)", ram: 16, gpu: "RTX 4060", vram: 8, cpu: "Intel i7", cores: 14 },
+                                { config: "i7-13700H + RTX 4070 (32GB)", ram: 32, gpu: "RTX 4070", vram: 12, cpu: "Intel i7", cores: 14 }
+                            ]
+                        },
+                        "Alienware m18": {
+                            2024: [
+                                { config: "i9-13900HX + RTX 4080 (32GB)", ram: 32, gpu: "RTX 4080", vram: 16, cpu: "Intel i9", cores: 24 },
+                                { config: "i9-13900HX + RTX 4090 (64GB)", ram: 64, gpu: "RTX 4090", vram: 24, cpu: "Intel i9", cores: 24 }
+                            ]
+                        }
+                    },
+                    hp: {
+                        "Spectre x360": {
+                            2024: [
+                                { config: "i7-1355U (16GB)", ram: 16, gpu: "Intel Iris Xe", vram: 2, cpu: "Intel i7", cores: 10 },
+                                { config: "i7-1355U (32GB)", ram: 32, gpu: "Intel Iris Xe", vram: 4, cpu: "Intel i7", cores: 10 }
+                            ]
+                        },
+                        "Pavilion Gaming": {
+                            2024: [
+                                { config: "i5-12450H + GTX 1650 (8GB)", ram: 8, gpu: "GTX 1650", vram: 4, cpu: "Intel i5", cores: 8 },
+                                { config: "i7-12700H + RTX 3060 (16GB)", ram: 16, gpu: "RTX 3060", vram: 8, cpu: "Intel i7", cores: 12 }
+                            ]
+                        },
+                        "Omen": {
+                            2024: [
+                                { config: "i7-13700HX + RTX 4070 (16GB)", ram: 16, gpu: "RTX 4070", vram: 12, cpu: "Intel i7", cores: 16 },
+                                { config: "i7-13700HX + RTX 4080 (32GB)", ram: 32, gpu: "RTX 4080", vram: 16, cpu: "Intel i7", cores: 16 }
+                            ]
+                        }
+                    },
+                    lenovo: {
+                        "ThinkPad X1 Carbon": {
+                            2024: [
+                                { config: "i7-1365U (16GB)", ram: 16, gpu: "Intel Iris Xe", vram: 2, cpu: "Intel i7", cores: 10 },
+                                { config: "i7-1365U (32GB)", ram: 32, gpu: "Intel Iris Xe", vram: 4, cpu: "Intel i7", cores: 10 }
+                            ]
+                        },
+                        "Legion Pro 7": {
+                            2024: [
+                                { config: "i7-13700HX + RTX 4070 (16GB)", ram: 16, gpu: "RTX 4070", vram: 12, cpu: "Intel i7", cores: 16 },
+                                { config: "i7-13700HX + RTX 4080 (32GB)", ram: 32, gpu: "RTX 4080", vram: 16, cpu: "Intel i7", cores: 16 }
+                            ]
+                        },
+                        "Yoga Pro 9": {
+                            2024: [
+                                { config: "i7-13705H + RTX 4060 (16GB)", ram: 16, gpu: "RTX 4060", vram: 8, cpu: "Intel i7", cores: 14 },
+                                { config: "i7-13705H + RTX 4070 (32GB)", ram: 32, gpu: "RTX 4070", vram: 12, cpu: "Intel i7", cores: 14 }
+                            ]
+                        }
+                    },
+                    asus: {
+                        "ZenBook": {
+                            2024: [
+                                { config: "i7-1360P (16GB)", ram: 16, gpu: "Intel Iris Xe", vram: 2, cpu: "Intel i7", cores: 12 },
+                                { config: "i7-1360P (32GB)", ram: 32, gpu: "Intel Iris Xe", vram: 4, cpu: "Intel i7", cores: 12 }
+                            ]
+                        },
+                        "ROG Strix": {
+                            2024: [
+                                { config: "i7-13700HX + RTX 4070 (16GB)", ram: 16, gpu: "RTX 4070", vram: 12, cpu: "Intel i7", cores: 16 },
+                                { config: "i9-13980HX + RTX 4090 (32GB)", ram: 32, gpu: "RTX 4090", vram: 24, cpu: "Intel i9", cores: 24 }
+                            ]
+                        },
+                        "TUF Gaming": {
+                            2024: [
+                                { config: "i5-12500H + RTX 3060 (8GB)", ram: 8, gpu: "RTX 3060", vram: 8, cpu: "Intel i5", cores: 12 },
+                                { config: "i7-12700H + RTX 4060 (16GB)", ram: 16, gpu: "RTX 4060", vram: 8, cpu: "Intel i7", cores: 12 }
+                            ]
+                        }
+                    },
+                    microsoft: {
+                        "Surface Laptop": {
+                            2024: [
+                                { config: "i7-1255U (16GB)", ram: 16, gpu: "Intel Iris Xe", vram: 2, cpu: "Intel i7", cores: 10 },
+                                { config: "i7-1255U (32GB)", ram: 32, gpu: "Intel Iris Xe", vram: 4, cpu: "Intel i7", cores: 10 }
+                            ]
+                        },
+                        "Surface Studio": {
+                            2024: [
+                                { config: "i7-11370H + RTX 3060 (16GB)", ram: 16, gpu: "RTX 3060", vram: 8, cpu: "Intel i7", cores: 8 },
+                                { config: "i7-11370H + RTX 3060 (32GB)", ram: 32, gpu: "RTX 3060", vram: 8, cpu: "Intel i7", cores: 8 }
+                            ]
+                        }
+                    },
+                    custom: {
+                        "Gaming Build": {
+                            2024: [
+                                { config: "Mid-range (i5 + RTX 4060)", ram: 16, gpu: "RTX 4060", vram: 8, cpu: "Intel i5", cores: 6 },
+                                { config: "High-end (i7 + RTX 4070)", ram: 32, gpu: "RTX 4070", vram: 12, cpu: "Intel i7", cores: 8 },
+                                { config: "Enthusiast (i9 + RTX 4090)", ram: 64, gpu: "RTX 4090", vram: 24, cpu: "Intel i9", cores: 16 }
+                            ]
+                        },
+                        "Workstation": {
+                            2024: [
+                                { config: "Entry (i7 + RTX 4060)", ram: 32, gpu: "RTX 4060", vram: 8, cpu: "Intel i7", cores: 8 },
+                                { config: "Professional (i9 + RTX 4080)", ram: 64, gpu: "RTX 4080", vram: 16, cpu: "Intel i9", cores: 16 },
+                                { config: "Enterprise (Xeon + RTX 6000)", ram: 128, gpu: "RTX 6000", vram: 48, cpu: "Intel Xeon", cores: 24 }
+                            ]
+                        }
+                    }
+                };
+            }
+
+            getManufacturerModels(manufacturer) {
+                return Object.keys(this.computerDatabase[manufacturer] || {});
+            }
+
+            getModelYears(manufacturer, model) {
+                const manufacturerData = this.computerDatabase[manufacturer];
+                if (!manufacturerData || !manufacturerData[model]) return [];
+                return Object.keys(manufacturerData[model]).sort((a, b) => b - a);
+            }
+
+            getModelConfigurations(manufacturer, model, year) {
+                const manufacturerData = this.computerDatabase[manufacturer];
+                if (!manufacturerData || !manufacturerData[model] || !manufacturerData[model][year]) return [];
+                return manufacturerData[model][year];
+            }
+
+            analyzeFromSpecs(specs) {
+                this.systemInfo = {
+                    totalMemory: specs.ram,
+                    cpuCores: specs.cores,
+                    gpu: {
+                        vendor: specs.gpu.includes('RTX') || specs.gpu.includes('GTX') ? 'NVIDIA' : 
+                               specs.gpu.includes('Radeon') ? 'AMD' : 
+                               specs.gpu.includes('M1') || specs.gpu.includes('M2') || specs.gpu.includes('M3') ? 'Apple' : 'Intel',
+                        model: specs.gpu,
+                        memory: specs.vram
+                    },
+                    platform: specs.gpu.includes('M1') || specs.gpu.includes('M2') || specs.gpu.includes('M3') ? 'macOS' : 'Windows',
+                    webgl: true,
+                    webgpu: true,
+                    source: 'database',
+                    configuration: specs.config
+                };
+                return this.systemInfo;,
                     {
                         name: "Phi-3 Mini",
                         size: "3.8B parameters", 
@@ -486,25 +816,33 @@
 
             displaySystemInfo() {
                 const container = document.getElementById('systemInfo');
-                const { totalMemory, cpuCores, gpu, platform, webgl, webgpu } = this.systemInfo;
+                const { totalMemory, cpuCores, gpu, platform, source, configuration } = this.systemInfo;
+
+                let sourceInfo = '';
+                if (source === 'database') {
+                    sourceInfo = `<div class="info-card">
+                        <h3>📋 Configuration</h3>
+                        <p><strong>Selected:</strong> ${configuration}<br>
+                        <small>Specifications from manufacturer database</small></p>
+                    </div>`;
+                }
 
                 container.innerHTML = `
                     <div class="info-card">
                         <h3>💾 Memory</h3>
-                        <p><strong>Estimated RAM:</strong> ${totalMemory}GB<br>
-                        <small>Note: Browser-based estimation, actual RAM may vary</small></p>
+                        <p><strong>RAM:</strong> ${totalMemory}GB${source !== 'database' ? '<br><small>Note: Browser-based estimation, actual RAM may vary</small>' : ''}</p>
                     </div>
                     <div class="info-card">
                         <h3>🖥️ Graphics</h3>
                         <p><strong>GPU:</strong> ${gpu.model}<br>
-                        <strong>Estimated VRAM:</strong> ${gpu.memory}GB<br>
-                        <strong>WebGL:</strong> ${webgl ? '✅ Supported' : '❌ Not supported'}</p>
+                        <strong>VRAM:</strong> ${gpu.memory}GB${source !== 'database' ? '<br><strong>WebGL:</strong> ' + (this.systemInfo.webgl ? '✅ Supported' : '❌ Not supported') : ''}</p>
                     </div>
                     <div class="info-card">
                         <h3>⚡ Processing</h3>
                         <p><strong>CPU Cores:</strong> ${cpuCores}<br>
                         <strong>Platform:</strong> ${platform}</p>
                     </div>
+                    ${sourceInfo}
                 `;
             }
 
@@ -545,6 +883,159 @@
         }
 
         // Initialize the application
+        const analyzer = new SystemAnalyzer();
+
+        // Tab switching
+        document.getElementById('autoTab').addEventListener('click', () => {
+            document.getElementById('autoTab').classList.add('active');
+            document.getElementById('manualTab').classList.remove('active');
+            document.getElementById('autoDetect').classList.remove('hidden');
+            document.getElementById('manualInput').classList.add('hidden');
+        });
+
+        document.getElementById('manualTab').addEventListener('click', () => {
+            document.getElementById('manualTab').classList.add('active');
+            document.getElementById('autoTab').classList.remove('active');
+            document.getElementById('manualInput').classList.remove('hidden');
+            document.getElementById('autoDetect').classList.add('hidden');
+        });
+
+        // Manufacturer selection
+        document.getElementById('manufacturer').addEventListener('change', (e) => {
+            const manufacturer = e.target.value;
+            const modelSelect = document.getElementById('model');
+            const yearSelect = document.getElementById('year');
+            const lookupBtn = document.getElementById('lookupBtn');
+
+            if (manufacturer) {
+                const models = analyzer.getManufacturerModels(manufacturer);
+                modelSelect.innerHTML = '<option value="">Select Model</option>' + 
+                    models.map(model => `<option value="${model}">${model}</option>`).join('');
+                modelSelect.disabled = false;
+            } else {
+                modelSelect.innerHTML = '<option value="">Select Model</option>';
+                modelSelect.disabled = true;
+                yearSelect.innerHTML = '<option value="">Select Year</option>';
+                yearSelect.disabled = true;
+                lookupBtn.disabled = true;
+            }
+        });
+
+        // Model selection
+        document.getElementById('model').addEventListener('change', (e) => {
+            const manufacturer = document.getElementById('manufacturer').value;
+            const model = e.target.value;
+            const yearSelect = document.getElementById('year');
+            const lookupBtn = document.getElementById('lookupBtn');
+
+            if (model && manufacturer) {
+                const years = analyzer.getModelYears(manufacturer, model);
+                yearSelect.innerHTML = '<option value="">Select Year</option>' + 
+                    years.map(year => `<option value="${year}">${year}</option>`).join('');
+                yearSelect.disabled = false;
+            } else {
+                yearSelect.innerHTML = '<option value="">Select Year</option>';
+                yearSelect.disabled = true;
+                lookupBtn.disabled = true;
+            }
+        });
+
+        // Year selection
+        document.getElementById('year').addEventListener('change', (e) => {
+            const lookupBtn = document.getElementById('lookupBtn');
+            lookupBtn.disabled = !e.target.value;
+        });
+
+        // Auto-detect analysis
+        document.getElementById('analyzeBtn').addEventListener('click', async () => {
+            await runAnalysis('auto');
+        });
+
+        // Lookup analysis
+        document.getElementById('lookupBtn').addEventListener('click', async () => {
+            await runAnalysis('lookup');
+        });
+
+        async function runAnalysis(type) {
+            const autoBtn = document.getElementById('analyzeBtn');
+            const lookupBtn = document.getElementById('lookupBtn');
+            const loading = document.getElementById('loading');
+            const systemInfo = document.getElementById('systemInfo');
+            const recommendations = document.getElementById('recommendations');
+
+            // Show loading state
+            if (type === 'auto') {
+                autoBtn.disabled = true;
+            } else {
+                lookupBtn.disabled = true;
+            }
+            loading.classList.remove('hidden');
+            systemInfo.classList.add('hidden');
+            recommendations.classList.add('hidden');
+
+            try {
+                // Simulate analysis delay for better UX
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                if (type === 'auto') {
+                    // Auto-detect analysis
+                    await analyzer.analyzeSystem();
+                } else {
+                    // Lookup analysis
+                    const manufacturer = document.getElementById('manufacturer').value;
+                    const model = document.getElementById('model').value;
+                    const year = document.getElementById('year').value;
+                    
+                    const configurations = analyzer.getModelConfigurations(manufacturer, model, year);
+                    
+                    if (configurations.length === 1) {
+                        // Only one configuration, use it directly
+                        analyzer.analyzeFromSpecs(configurations[0]);
+                    } else if (configurations.length > 1) {
+                        // Multiple configurations, let user choose the best one (highest RAM)
+                        const bestConfig = configurations.reduce((best, current) => 
+                            current.ram > best.ram ? current : best
+                        );
+                        analyzer.analyzeFromSpecs(bestConfig);
+                        
+                        // Show a note about multiple configurations
+                        document.getElementById('modelList').innerHTML = `
+                            <div class="warning">
+                                <h4>ℹ️ Multiple Configurations Available</h4>
+                                <p>This ${manufacturer} ${model} (${year}) comes in multiple configurations. Showing recommendations for the highest-spec version (${bestConfig.config}). Your actual model may vary.</p>
+                            </div>
+                        ` + document.getElementById('modelList').innerHTML;
+                    }
+                }
+                
+                // Display results
+                analyzer.displaySystemInfo();
+                systemInfo.classList.remove('hidden');
+
+                const recommendedModels = analyzer.getRecommendedModels();
+                analyzer.displayRecommendations(recommendedModels);
+                recommendations.classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Analysis failed:', error);
+                document.getElementById('modelList').innerHTML = `
+                    <div class="warning">
+                        <h4>❌ Analysis Error</h4>
+                        <p>Unable to complete system analysis. Please try refreshing the page.</p>
+                    </div>
+                `;
+                recommendations.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
+                if (type === 'auto') {
+                    autoBtn.disabled = false;
+                    autoBtn.textContent = '🔄 Re-analyze System';
+                } else {
+                    lookupBtn.disabled = false;
+                    lookupBtn.textContent = '🔄 Re-lookup Specifications';
+                }
+            }
+        }
         const analyzer = new SystemAnalyzer();
 
         document.getElementById('analyzeBtn').addEventListener('click', async () => {
