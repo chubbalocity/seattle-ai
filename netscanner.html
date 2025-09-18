@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Scanner & Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"] {
+            padding: 10px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .status.scanning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status.complete {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .visualization {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+
+        #networkDiagram {
+            width: 100%;
+            height: 500px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+
+        .device-list {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .device-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s;
+        }
+
+        .device-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .device-ip {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .device-info {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e1e5e9;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 Network Scanner</h1>
+            <p>Discover and visualize devices on your local network</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Network Range:</label>
+                <input type="text" id="networkRange" value="192.168.1.1-254" placeholder="e.g., 192.168.1.1-254">
+                <button id="scanBtn" onclick="startScan()">🔍 Start Scan</button>
+                <button id="stopBtn" onclick="stopScan()" disabled>⏹️ Stop</button>
+            </div>
+            
+            <div id="status" class="status" style="display: none;"></div>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="visualization">
+            <h3>Network Topology</h3>
+            <canvas id="networkDiagram"></canvas>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4CAF50;"></div>
+                    <span>Responsive Hosts</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #2196F3;"></div>
+                    <span>Gateway/Router</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #FF9800;"></div>
+                    <span>Your Device</span>
+                </div>
+            </div>
+
+            <div id="deviceList" class="device-list"></div>
+        </div>
+    </div>
+
+    <script>
+        let scanInProgress = false;
+        let foundDevices = [];
+        let canvas, ctx;
+        let animationId;
+
+        // Initialize canvas
+        window.onload = function() {
+            canvas = document.getElementById('networkDiagram');
+            ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            function resizeCanvas() {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                drawNetworkDiagram();
+            }
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Try to detect local IP
+            detectLocalIP();
+        };
+
+        async function detectLocalIP() {
+            try {
+                // This is a common technique to detect local IP
+                const pc = new RTCPeerConnection({
+                    iceServers: [{urls: "stun:stun.l.google.com:19302"}]
+                });
+                
+                pc.createDataChannel("");
+                await pc.createOffer().then(offer => pc.setLocalDescription(offer));
+                
+                pc.onicecandidate = (ice) => {
+                    if (ice && ice.candidate && ice.candidate.candidate) {
+                        const candidate = ice.candidate.candidate;
+                        const match = candidate.match(/(\d+\.\d+\.\d+\.\d+)/);
+                        if (match && match[1]) {
+                            const localIP = match[1];
+                            if (localIP.startsWith('192.168.') || localIP.startsWith('10.') || localIP.startsWith('172.')) {
+                                const parts = localIP.split('.');
+                                const baseIP = parts.slice(0, 3).join('.');
+                                document.getElementById('networkRange').value = `${baseIP}.1-254`;
+                            }
+                        }
+                        pc.close();
+                    }
+                };
+            } catch (e) {
+                console.log('Could not auto-detect network range');
+            }
+        }
+
+        async function startScan() {
+            if (scanInProgress) return;
+
+            scanInProgress = true;
+            foundDevices = [];
+            
+            const scanBtn = document.getElementById('scanBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const status = document.getElementById('status');
+            const progressFill = document.getElementById('progressFill');
+            const deviceList = document.getElementById('deviceList');
+            
+            scanBtn.disabled = true;
+            stopBtn.disabled = false;
+            status.style.display = 'block';
+            status.className = 'status scanning';
+            status.textContent = 'Scanning network...';
+            deviceList.innerHTML = '';
+            
+            const networkRange = document.getElementById('networkRange').value;
+            const [baseRange, range] = networkRange.split(/[-–]/);
+            const [start, end] = range ? [parseInt(baseRange.split('.')[3]), parseInt(range)] : [1, 254];
+            const baseIP = baseRange.substring(0, baseRange.lastIndexOf('.'));
+            
+            const total = end - start + 1;
+            let completed = 0;
+            
+            // Scan in batches to avoid overwhelming the browser
+            const batchSize = 10;
+            for (let i = start; i <= end && scanInProgress; i += batchSize) {
+                const batch = [];
+                
+                for (let j = i; j < Math.min(i + batchSize, end + 1) && scanInProgress; j++) {
+                    const ip = `${baseIP}.${j}`;
+                    batch.push(pingHost(ip));
+                }
+                
+                const results = await Promise.allSettled(batch);
+                
+                results.forEach((result, index) => {
+                    completed++;
+                    const progress = (completed / total) * 100;
+                    progressFill.style.width = `${progress}%`;
+                    
+                    if (result.status === 'fulfilled' && result.value) {
+                        foundDevices.push(result.value);
+                        addDeviceCard(result.value);
+                        drawNetworkDiagram();
+                    }
+                });
+                
+                // Small delay between batches
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            if (scanInProgress) {
+                status.className = 'status complete';
+                status.textContent = `Scan complete! Found ${foundDevices.length} responsive hosts.`;
+            }
+            
+            scanInProgress = false;
+            scanBtn.disabled = false;
+            stopBtn.disabled = true;
+        }
+
+        function stopScan() {
+            scanInProgress = false;
+            const status = document.getElementById('status');
+            status.className = 'status complete';
+            status.textContent = `Scan stopped. Found ${foundDevices.length} responsive hosts.`;
+        }
+
+        async function pingHost(ip) {
+            try {
+                // Use multiple techniques to detect responsive hosts
+                const methods = [
+                    () => fetchWithTimeout(`http://${ip}:80`, 2000),
+                    () => fetchWithTimeout(`https://${ip}:443`, 2000),
+                    () => fetchWithTimeout(`http://${ip}:8080`, 2000),
+                    () => fetchWithTimeout(`http://${ip}:22`, 2000), // SSH
+                    () => checkWebSocket(ip, 80),
+                    () => checkWebSocket(ip, 443)
+                ];
+
+                // Try to create a basic connection
+                const promises = methods.map(method => 
+                    method().catch(() => null)
+                );
+
+                const results = await Promise.race([
+                    Promise.allSettled(promises),
+                    new Promise(resolve => setTimeout(() => resolve([]), 3000))
+                ]);
+
+                // If any method succeeded, consider the host responsive
+                const hasResponse = results.some(result => 
+                    result && result.status === 'fulfilled' && result.value
+                );
+
+                if (hasResponse) {
+                    return {
+                        ip: ip,
+                        status: 'responsive',
+                        timestamp: new Date().toLocaleTimeString(),
+                        methods: 'HTTP/HTTPS/WebSocket probe'
+                    };
+                }
+
+                // Additional check: try to resolve hostname
+                try {
+                    const img = new Image();
+                    const promise = new Promise((resolve) => {
+                        img.onload = () => resolve(true);
+                        img.onerror = () => resolve(true); // Even errors indicate the host is reachable
+                        setTimeout(() => resolve(false), 1000);
+                    });
+                    img.src = `http://${ip}:80/favicon.ico?${Date.now()}`;
+                    
+                    if (await promise) {
+                        return {
+                            ip: ip,
+                            status: 'responsive',
+                            timestamp: new Date().toLocaleTimeString(),
+                            methods: 'Image probe'
+                        };
+                    }
+                } catch (e) {}
+
+                return null;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        async function fetchWithTimeout(url, timeout = 2000) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                return true;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    return false;
+                }
+                // Network errors might still indicate a responsive host
+                return error.message.includes('CORS') || error.message.includes('network');
+            }
+        }
+
+        async function checkWebSocket(ip, port) {
+            return new Promise((resolve) => {
+                const ws = new WebSocket(`ws://${ip}:${port}`);
+                const timeout = setTimeout(() => {
+                    ws.close();
+                    resolve(false);
+                }, 1000);
+                
+                ws.onopen = () => {
+                    clearTimeout(timeout);
+                    ws.close();
+                    resolve(true);
+                };
+                
+                ws.onerror = () => {
+                    clearTimeout(timeout);
+                    resolve(false);
+                };
+            });
+        }
+
+        function addDeviceCard(device) {
+            const deviceList = document.getElementById('deviceList');
+            const card = document.createElement('div');
+            card.className = 'device-card';
+            
+            const isGateway = device.ip.endsWith('.1') || device.ip.endsWith('.254');
+            const deviceType = isGateway ? '🌐 Gateway/Router' : '💻 Host Device';
+            
+            card.innerHTML = `
+                <div class="device-ip">${deviceType} - ${device.ip}</div>
+                <div class="device-info">
+                    Status: ${device.status}<br>
+                    Discovered: ${device.timestamp}<br>
+                    Detection: ${device.methods}
+                </div>
+            `;
+            
+            deviceList.appendChild(card);
+        }
+
+        function drawNetworkDiagram() {
+            if (!canvas || !ctx) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (foundDevices.length === 0) {
+                ctx.fillStyle = '#666';
+                ctx.font = '18px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('No devices found yet...', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+            
+            // Draw network topology
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(canvas.width, canvas.height) * 0.3;
+            
+            // Draw central hub/router
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
+            ctx.fillStyle = '#2196F3';
+            ctx.fill();
+            ctx.strokeStyle = '#1976D2';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Label for central hub
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Router/Gateway', centerX, centerY - 45);
+            
+            // Draw devices around the hub
+            foundDevices.forEach((device, index) => {
+                const angle = (2 * Math.PI * index) / foundDevices.length;
+                const deviceX = centerX + Math.cos(angle) * radius;
+                const deviceY = centerY + Math.sin(angle) * radius;
+                
+                // Draw connection line
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(deviceX, deviceY);
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw device node
+                ctx.beginPath();
+                ctx.arc(deviceX, deviceY, 20, 0, 2 * Math.PI);
+                
+                // Color based on device type
+                if (device.ip.endsWith('.1') || device.ip.endsWith('.254')) {
+                    ctx.fillStyle = '#FF9800'; // Gateway
+                } else {
+                    ctx.fillStyle = '#4CAF50'; // Regular device
+                }
+                
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Device label
+                ctx.fillStyle = '#333';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(device.ip, deviceX, deviceY + 35);
+            });
+            
+            // Add animation
+            if (scanInProgress) {
+                const time = Date.now() * 0.001;
+                foundDevices.forEach((device, index) => {
+                    const angle = (2 * Math.PI * index) / foundDevices.length;
+                    const deviceX = centerX + Math.cos(angle) * radius;
+                    const deviceY = centerY + Math.sin(angle) * radius;
+                    
+                    // Animated pulse
+                    const pulse = Math.sin(time * 2 + index) * 0.3 + 0.7;
+                    ctx.beginPath();
+                    ctx.arc(deviceX, deviceY, 25 * pulse, 0, 2 * Math.PI);
+                    ctx.strokeStyle = `rgba(76, 175, 80, ${pulse * 0.3})`;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                });
+                
+                animationId = requestAnimationFrame(() => drawNetworkDiagram());
+            }
+        }
+    </script>
+</body>
+</html>
